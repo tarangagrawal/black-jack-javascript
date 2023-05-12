@@ -1,14 +1,194 @@
-# BlackJack, a command line JavaScript application
+// BlackJack command line application
 
-## 1. Running this application 
+const readline = require("readline");
+const SOFT_17 = 17;
+const RESHUFFLE_LIMIT = 6;
 
-* `git clone` this repo. 
-* Open up the app in VSCode or a similar IDE.  
-* run `npm install` to install any dependencies this project uses. 
-* run `node black-jack.js` and have some BlackJack fun. A♠️, K♥️
+class Card {
+  constructor(value, suit) {
+    this.value = value;
+    this.suit = suit;
+  }
 
-## 2. Dependencies 
+  cardValue() {
+    if (this.value > 1 || this.value < 11) {
+      return this.value;
+    }
+    if (this.value === "J" || this.value === "Q" || this.value === "K") {
+      return 10;
+    }
+    return 11; // default for Ace
+  }
+}
 
-`require` package is used in this application to read in user input. 
+class Deck {
+  // create 52 cards
+  constructor() {
+    this.cards = [];
+    this.reshuffleCount = 0;
+    this.initializeDeck();
+  }
+  getIntialCards () {
+    return this.cards;
+  }
+  initializeDeck() {
+    const suits = ["♥️", "♦️", "♣️", "♠️"];
+    for (let value = 2; value < 11; value++) {
+      for (const suit of suits) {
+        const card = new Card(value, suit);
+        this.cards.push(card);
+      }
+    }
+    const highCards = ["J", "Q", "K", "A"];
+    for (const highCard of highCards) {
+      for (const suit of suits) {
+        const card = new Card(highCard, suit);
+        this.cards.push(card);
+      }
+    }
+    console.log(this.cards);
+    return this.cards;
+  }
 
-```npm install require```
+  shuffle() {
+    for (let i = this.cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+    }
+    this.reshuffleCount++;
+  }
+
+  dealCard() {
+    if (this.reshuffleCount >= RESHUFFLE_LIMIT) {
+      this.cards = [];
+      this.initializeDeck();
+      this.shuffle();
+      this.reshuffleCount = 0;
+      console.log('\nDeck has been reshuffled.');
+    }
+    return this.cards.pop();
+  }
+  
+}
+
+class BlackJack {
+  constructor() {
+    this.deck = new Deck();
+    this.cards = this.deck.getIntialCards();
+    this.score = 0;
+    console.log("Welcome to BlackJack.");
+    console.log(`The deck has ${this.cards.length} cards.`);
+  }
+
+  getDeckObject() {
+    return this.deck;
+  }
+
+  hasCards() {
+    return this.cards.length === 0;
+  }
+
+  addCard() {
+    const card = this.cards[Math.floor(Math.random() * this.cards.length)]; 
+    const index = this.cards.indexOf(card); 
+    this.cards.splice(index, 1);
+    this.score += card.cardValue();
+    return this.score;
+  }
+
+  hit() {
+    const card = this.cards[Math.floor(Math.random() * this.cards.length)]; 
+    const index = this.cards.indexOf(card); 
+    this.cards.splice(index, 1); 
+    this.deck.dealCard();
+    console.log(
+      `${this.cards.length} cards left, ${card.value}${
+        card.suit
+      } was removed with value ${card.cardValue()}.`
+    );
+    const gamePlayStatus = this.checkScore(card);
+    return { card: card, gamePlayStatus: gamePlayStatus, score: this.score };
+  }
+
+  checkScore(card) {
+    this.score += card.cardValue();
+    console.log(this.score);
+    if (this.score === 21) {
+      return "blackJack";
+    } else if (this.score > 21) {
+      return "bust";
+    } else {
+      return "continue";
+    }
+  }
+
+  getScore() {
+    return this.score;
+  }
+
+  computerScore() {
+    while (this.score < SOFT_17) {
+      this.addCard();
+    }
+    return this.score;
+  }
+
+  stand() {
+    const playerScore = blackJack.getScore();
+    const computerScore = blackJack.computerScore();
+    const playerScoreDiff = 21 - playerScore;
+    const computerScoreDiff = 21 - computerScore;
+    if (computerScore > 21) {
+      console.log(
+        `You won with ${playerScore} and the computer lost with ${computerScore}`
+      );
+    } else {
+      if (computerScoreDiff === playerScoreDiff) {
+        console.log(
+          `Tie!, computer score is ${computerScore} and your score is ${playerScore}`
+        );
+      } else if (computerScoreDiff < playerScoreDiff) {
+        console.log(
+          `You lost with ${playerScore} and the computer won with ${computerScore}`
+        );
+      } else {
+        console.log(
+          `You won with ${playerScore} and the computer lost with ${computerScore}`
+        );
+      }
+    }
+  }
+}
+
+//---->Game start
+
+const blackJack = new BlackJack();
+
+const r1 = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+const gamePlay = function () {
+  blackJack.getDeckObject().shuffle();
+  r1.question("Do you want to `hit` or `stand`?", (answer) => {
+    if (answer === "hit") {
+      const result = blackJack.hit();
+      if (result.gamePlayStatus === "blackJack") {
+        console.log(`Woohoo BlackJack!!!!`);
+        return r1.close();
+      }
+      if (result.gamePlayStatus === "bust") {
+        console.log(`Better luck next time.`);
+        return r1.close();
+      }
+    }
+    if (answer === "stand") {
+      blackJack.stand();
+      return r1.close();
+    }
+    gamePlay();
+  });
+};
+
+gamePlay();
