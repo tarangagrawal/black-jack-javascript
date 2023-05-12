@@ -1,0 +1,28 @@
+{
+  "name": "black-jack-javascript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "black-jack.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write *.js",
+    "start": "node black-jack.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tarangagrawal/black-jack-javascript"
+  },
+  "author": "Tarang Agrawal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tarangagrawal/black-jack-javascript"
+  },
+  "devDependencies": {
+    "prettier": "^2.1.2"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.6"
+  }
+}

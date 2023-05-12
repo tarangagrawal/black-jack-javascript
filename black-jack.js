@@ -1,38 +1,9 @@
-# BlackJack, a command line JavaScript application
+// BlackJack command line application
 
-## 1. Running this application 
+const readline = require("readline");
+const SOFT_17 = 17;
+const RESHUFFLE_LIMIT = 6;
 
-* `git clone` this repo. 
-* Open up the app in VSCode or a similar IDE.  
-* run `npm install` to install any dependencies this project uses. 
-* run `node black-jack.js` and have some BlackJack fun. A♠️, K♥️
-
-## 2. Dependencies 
-
-`require` package is used in this application to read in user input. 
-
-```npm install require```
-
-```javacript 
-const readline = require('readline');
-```
-
-```javascript 
-const r1 = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-r1.question('Do you want to `hit` or `stand`?', (answer) => {
-  console.log(`You entered ${answer}`); // You entered hit
-})
-```
-
-## 3. Main classes
-
-#### Card 
-
-```javascript 
 class Card {
   constructor(value, suit) {
     this.value = value;
@@ -49,54 +20,87 @@ class Card {
     return 11; // default for Ace
   }
 }
-```
 
-#### Deck 
-
-```javascript 
 class Deck {
   // create 52 cards
-  constructor(aceValue) {
-    let cards = [];
+  constructor() {
+    this.cards = [];
+    this.reshuffleCount = 0;
+    this.initializeDeck();
+  }
+  getIntialCards () {
+    return this.cards;
+  }
+  initializeDeck() {
     const suits = ["♥️", "♦️", "♣️", "♠️"];
     for (let value = 2; value < 11; value++) {
       for (const suit of suits) {
         const card = new Card(value, suit);
-        cards.push(card);
+        this.cards.push(card);
       }
     }
     const highCards = ["J", "Q", "K", "A"];
     for (const highCard of highCards) {
       for (const suit of suits) {
         const card = new Card(highCard, suit);
-        cards.push(card);
+        this.cards.push(card);
       }
     }
-    console.log(cards);
-    return cards;
+    console.log(this.cards);
+    return this.cards;
   }
+
+  shuffle() {
+    for (let i = this.cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+    }
+    this.reshuffleCount++;
+  }
+
+  dealCard() {
+    if (this.reshuffleCount >= RESHUFFLE_LIMIT) {
+      this.cards = [];
+      this.initializeDeck();
+      this.shuffle();
+      this.reshuffleCount = 0;
+      console.log('\nDeck has been reshuffled.');
+    }
+    return this.cards.pop();
+  }
+  
 }
-```
 
-### BlackJack 
-
-```javascript 
 class BlackJack {
   constructor() {
-    this.cards = new Deck();
+    this.deck = new Deck();
+    this.cards = this.deck.getIntialCards();
     this.score = 0;
     console.log("Welcome to BlackJack.");
     console.log(`The deck has ${this.cards.length} cards.`);
+  }
+
+  getDeckObject() {
+    return this.deck;
   }
 
   hasCards() {
     return this.cards.length === 0;
   }
 
+  addCard() {
+    const card = this.cards[Math.floor(Math.random() * this.cards.length)]; 
+    const index = this.cards.indexOf(card); 
+    this.cards.splice(index, 1);
+    this.score += card.cardValue();
+    return this.score;
+  }
+
   hit() {
     const card = this.cards[Math.floor(Math.random() * this.cards.length)]; 
     const index = this.cards.indexOf(card); 
     this.cards.splice(index, 1); 
+    this.deck.dealCard();
     console.log(
       `${this.cards.length} cards left, ${card.value}${
         card.suit
@@ -123,8 +127,10 @@ class BlackJack {
   }
 
   computerScore() {
-    const score = Math.floor(Math.random() * (21 - 18) + 18);
-    return score;
+    while (this.score < SOFT_17) {
+      this.addCard();
+    }
+    return this.score;
   }
 
   stand() {
@@ -153,13 +159,9 @@ class BlackJack {
     }
   }
 }
-```
 
-![black-jack-gif](Assets/black-jack.gif)
+//---->Game start
 
-## 4. Game play start 
-
-```javascript 
 const blackJack = new BlackJack();
 
 const r1 = readline.createInterface({
@@ -168,6 +170,7 @@ const r1 = readline.createInterface({
 });
 
 const gamePlay = function () {
+  blackJack.getDeckObject().shuffle();
   r1.question("Do you want to `hit` or `stand`?", (answer) => {
     if (answer === "hit") {
       const result = blackJack.hit();
@@ -189,8 +192,3 @@ const gamePlay = function () {
 };
 
 gamePlay();
-```
-
-## Bonus features 
-
-If cloning this repo or working on the BlackJack implementation, please feel free to add additional BlackJack features like being able to place bets and splitting cards. Happy coding 🥳
